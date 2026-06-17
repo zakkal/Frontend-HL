@@ -40,8 +40,12 @@ export default function Dashboard() {
       })
     })
 
-    // Load semua AI data
-    loadAllAI()
+    // Load semua AI data — summary tidak auto-load, hemat quota
+    loadRisk()
+    loadPredictions()
+    loadOverdue()
+    loadAnomalies()
+    // Daily summary hanya load manual lewat tombol refresh
   }, [])
 
   const loadAllAI = () => {
@@ -49,7 +53,7 @@ export default function Dashboard() {
     loadPredictions()
     loadOverdue()
     loadAnomalies()
-    loadSummary()
+    loadSummary() // hanya jalan kalau klik "Refresh AI" manual
   }
 
   const loadRisk = async () => {
@@ -167,7 +171,16 @@ export default function Dashboard() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 italic">Gagal memuat ringkasan AI. Coba refresh.</p>
+            <div className="flex flex-col items-center justify-center py-4 gap-3">
+              <p className="text-sm text-gray-500 text-center">Klik refresh untuk generate ringkasan bisnis hari ini.</p>
+              <button
+                onClick={loadSummary}
+                className="flex items-center gap-2 text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Generate Ringkasan
+              </button>
+            </div>
           )}
         </div>
 
