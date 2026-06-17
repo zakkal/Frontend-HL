@@ -22,7 +22,9 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": [
         "src/*"
@@ -30,6 +32,7 @@
     }
   },
   "include": [
-    "src"
+    "src",
+    "src/vite-env.d.ts"
   ]
 }

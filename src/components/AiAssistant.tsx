@@ -177,7 +177,7 @@ export default function AiAssistant() {
         }
         return s
       })
-      saveSessions(afterAiSessions)
+      saveSessions(afterAiSessions as ChatSession[])
     } catch (err: any) {
       let friendlyError = `Maaf, terjadi kesalahan: ${err.message || 'Gagal terhubung dengan server AI.'}`
       
@@ -229,7 +229,7 @@ Silakan ikuti langkah berikut untuk mengatasinya:
         }
         return s
       })
-      saveSessions(afterErrorSessions)
+      saveSessions(afterErrorSessions as ChatSession[])
     } finally {
       setLoading(false)
     }
