@@ -253,6 +253,10 @@ Yang perlu kamu lakukan:
 2. Login kembali dengan email dan password kamu.
 3. Buka kembali chat ini dan lanjutkan seperti biasa.`
       } else if (errMsg.includes('quota') || errMsg.includes('limit') || errMsg.includes('429') || errMsg.includes('sibuk') || errMsg.includes('habis')) {
+        // Tandai quota habis di tracker lokal
+        const exhausted: QuotaState = { used: DAILY_LIMIT, date: getTodayWIB() }
+        localStorage.setItem(QUOTA_KEY, JSON.stringify(exhausted))
+        setQuotaRemaining(0)
         const resetStr = formatResetTime(getResetTimeWIB())
         friendlyError = `Layanan AI sedang tidak tersedia karena batas penggunaan harian telah tercapai.
 
