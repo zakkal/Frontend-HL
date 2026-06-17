@@ -257,14 +257,40 @@ Yang bisa kamu lakukan:
     return [cleanStr]
   }
 
+  const [isHovered, setIsHovered] = useState(false)
+
   return (
     <>
       {/* Floating Action Button */}
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 bg-gray-900 border-2 border-amber-400 hover:border-amber-300 text-amber-400 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(251,191,36,0.3)] hover:shadow-[0_0_25px_rgba(251,191,36,0.5)] transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="fixed bottom-6 right-6 z-50 bg-gray-900 border-2 border-amber-400 hover:border-amber-300 text-amber-400 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(251,191,36,0.3)] hover:shadow-[0_0_30px_rgba(251,191,36,0.6)] transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
       >
+        {/* Hover tooltip */}
+        <div className={`absolute bottom-16 right-0 transition-all duration-300 ${
+          isHovered && !isOpen
+            ? 'opacity-100 translate-y-0 pointer-events-none'
+            : 'opacity-0 translate-y-2 pointer-events-none'
+        }`}>
+          <div className="bg-gray-900 border border-amber-400/40 rounded-2xl rounded-br-sm px-4 py-3 shadow-xl shadow-black/40 w-52">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-ping flex-shrink-0" />
+              <p className="text-xs font-bold text-amber-400">HL AI Assistant</p>
+            </div>
+            <p className="text-xs text-gray-300 leading-relaxed">
+              Halo! Saya AI siap membantu kamu analisis keuangan, piutang, dan performa bisnis. 👋
+            </p>
+            <div className="mt-2 flex items-center gap-1.5">
+              <span className="text-[10px] text-gray-500">Klik untuk mulai chat</span>
+              <span className="text-amber-400 text-[10px]">→</span>
+            </div>
+          </div>
+          {/* Arrow */}
+          <div className="absolute -bottom-1.5 right-5 w-3 h-3 bg-gray-900 border-r border-b border-amber-400/40 rotate-45" />
+        </div>
         {isOpen ? (
           <X className="w-6 h-6" />
         ) : (
