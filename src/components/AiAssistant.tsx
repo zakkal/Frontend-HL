@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MessageSquare, Send, X, Bot, Sparkles, Plus, Trash2, History, ArrowLeft } from 'lucide-react'
+import { MessageSquare, Send, X, Bot, Sparkles, Plus, Trash2, History, ArrowLeft, AlertTriangle } from 'lucide-react'
 import { api } from '../lib/api'
 
 interface Message {
@@ -13,6 +13,66 @@ interface ChatSession {
   messages: Message[]
 }
 
+// ─── Quota Tracker (localStorage) ─────────────────────────────
+// Reset jam 15:00 WIB = 08:00 UTC setiap hari
+const QUOTA_KEY = 'hl_ai_quota'
+const DAILY_LIMIT = 1000
+const WARN_THRESHOLD = 50 // mulai warning saat sisa <= 50
+
+function getResetTimeWIB(): Date {
+  const now = new Date()
+  // Reset jam 15:00 WIB (08:00 UTC)
+  const reset = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 8, 0, 0, 0))
+  // Jika sekarang sudah lewat jam 15:00 WIB hari ini, reset besok
+  if (now.getTime() >= reset.getTime()) {
+    reset.setUTCDate(reset.getUTCDate() + 1)
+  }
+  return reset
+}
+
+function formatResetTime(resetDate: Date): string {
+  return resetDate.toLocaleString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }) + ' WIB'
+}
+
+export interface QuotaState {
+  used: number
+  date: string // YYYY-MM-DD in WIB
+}
+
+function getTodayWIB(): string {
+  return new Date().toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' })
+}
+
+export function getQuota(): QuotaState {
+  try {
+    const raw = localStorage.getItem(QUOTA_KEY)
+    if (raw) {
+      const parsed: QuotaState = JSON.parse(raw)
+      if (parsed.date === getTodayWIB()) return parsed
+    }
+  } catch (_) {}
+  return { used: 0, date: getTodayWIB() }
+}
+
+export function incrementQuota(): QuotaState {
+  const current = getQuota()
+  const updated: QuotaState = { ...current, used: current.used + 1 }
+  localStorage.setItem(QUOTA_KEY, JSON.stringify(updated))
+  return updated
+}
+
+export function getRemainingQuota(): number {
+  return Math.max(0, DAILY_LIMIT - getQuota().used)
+}
+
 export default function AiAssistant() {
   const [isOpen, setIsOpen] = useState(false)
   const [view, setView] = useState<'chat' | 'list'>('chat')
@@ -20,6 +80,7 @@ export default function AiAssistant() {
   const [activeSessionId, setActiveSessionId] = useState<string>('')
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [quotaRemaining, setQuotaRemaining] = useState(getRemainingQuota())
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
@@ -171,6 +232,8 @@ export default function AiAssistant() {
 
     try {
       const response = await api.askAiChat(userText)
+      const updated = incrementQuota()
+      setQuotaRemaining(DAILY_LIMIT - updated.used)
       const afterAiSessions = updatedSessions.map(s => {
         if (s.id === activeSessionId) {
           return { ...s, messages: [...updatedMessages, { sender: 'ai', text: response.reply }] }
@@ -190,14 +253,16 @@ Yang perlu kamu lakukan:
 2. Login kembali dengan email dan password kamu.
 3. Buka kembali chat ini dan lanjutkan seperti biasa.`
       } else if (errMsg.includes('quota') || errMsg.includes('limit') || errMsg.includes('429') || errMsg.includes('sibuk') || errMsg.includes('habis')) {
+        const resetStr = formatResetTime(getResetTimeWIB())
         friendlyError = `Layanan AI sedang tidak tersedia karena batas penggunaan harian telah tercapai.
 
-Batas penggunaan akan otomatis pulih pada pukul 15.00 WIB hari ini.
+Quota akan otomatis pulih pada:
+${resetStr}
 
 Yang bisa kamu lakukan sekarang:
-1. Tutup percakapan ini dan coba lagi setelah pukul 15.00 WIB.
-2. Semua fitur lain (transaksi, laporan, pelanggan) tetap bisa digunakan seperti biasa.
-3. Jika sudah melewati pukul 15.00 WIB dan masih error, coba buat percakapan baru dengan klik tombol "+ Baru" di atas.`
+1. Coba lagi setelah waktu di atas.
+2. Semua fitur lain tetap bisa digunakan seperti biasa.
+3. Jika sudah melewati waktu tersebut dan masih error, klik "+ Baru" untuk memulai percakapan baru.`
       } else if (errMsg.includes('503') || errMsg.includes('unavailable') || errMsg.includes('fetch') || errMsg.includes('failed to connect') || errMsg.includes('network')) {
         friendlyError = `Layanan AI sedang tidak dapat dijangkau saat ini.
 
@@ -389,6 +454,24 @@ Yang bisa kamu lakukan:
               </button>
             </div>
           </div>
+
+          {/* Quota Warning Bar */}
+          {quotaRemaining <= WARN_THRESHOLD && quotaRemaining > 0 && (
+            <div className="bg-yellow-500/10 border-b border-yellow-500/20 px-4 py-2 flex items-center gap-2">
+              <AlertTriangle className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />
+              <p className="text-xs text-yellow-300">
+                Sisa <span className="font-bold">{quotaRemaining}</span> request AI hari ini. Reset: {formatResetTime(getResetTimeWIB())}
+              </p>
+            </div>
+          )}
+          {quotaRemaining === 0 && (
+            <div className="bg-red-500/10 border-b border-red-500/20 px-4 py-2 flex items-center gap-2">
+              <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+              <p className="text-xs text-red-300">
+                Limit harian habis. Tersedia kembali: {formatResetTime(getResetTimeWIB())}
+              </p>
+            </div>
+          )}
 
           {/* Body Section */}
           {view === 'list' ? (
