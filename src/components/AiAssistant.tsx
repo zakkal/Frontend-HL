@@ -183,35 +183,35 @@ export default function AiAssistant() {
       
       const errMsg = (err.message || '').toLowerCase()
       if (errMsg.includes('token') || errMsg.includes('expired') || errMsg.includes('unauthorized') || errMsg.includes('jwt')) {
-        friendlyError = `Sesi login Anda telah habis demi keamanan data toko.
+        friendlyError = `Sesi kamu telah berakhir karena sudah terlalu lama tidak aktif.
 
-Silakan ikuti langkah berikut untuk mengatasinya:
-1. Klik tombol Keluar (Logout) di menu utama aplikasi Anda.
-2. Masuk (Login) kembali menggunakan email & password Anda.
-3. Buka kembali asisten ini dan Anda bisa melanjutkan obrolan seperti biasa.`
-      } else if (errMsg.includes('quota') || errMsg.includes('limit') || errMsg.includes('429')) {
-        friendlyError = `Batas kuota penggunaan AI (Gemini) Anda telah habis untuk saat ini.
+Yang perlu kamu lakukan:
+1. Klik tombol Keluar di menu sidebar.
+2. Login kembali dengan email dan password kamu.
+3. Buka kembali chat ini dan lanjutkan seperti biasa.`
+      } else if (errMsg.includes('quota') || errMsg.includes('limit') || errMsg.includes('429') || errMsg.includes('sibuk') || errMsg.includes('habis')) {
+        friendlyError = `Layanan AI sedang tidak tersedia karena batas penggunaan harian telah tercapai.
 
-Silakan ikuti langkah berikut untuk mengatasinya:
-1. Tunggu 1-2 menit lalu coba kirim kembali pesan Anda (jika terkena batas menit).
-2. Jika kuota harian habis, kuota 1.500 chat gratis akan otomatis terisi kembali besok pagi.
-3. Anda bisa mengganti API Key di file .env backend dengan key cadangan jika mendesak.`
+Batas penggunaan akan otomatis pulih pada pukul 15.00 WIB hari ini.
+
+Yang bisa kamu lakukan sekarang:
+1. Tutup percakapan ini dan coba lagi setelah pukul 15.00 WIB.
+2. Semua fitur lain (transaksi, laporan, pelanggan) tetap bisa digunakan seperti biasa.
+3. Jika sudah melewati pukul 15.00 WIB dan masih error, coba buat percakapan baru dengan klik tombol "+ Baru" di atas.`
       } else if (errMsg.includes('503') || errMsg.includes('unavailable') || errMsg.includes('fetch') || errMsg.includes('failed to connect') || errMsg.includes('network')) {
-        friendlyError = `Server AI sedang sibuk atau tidak dapat dijangkau (Service Unavailable).
+        friendlyError = `Layanan AI sedang tidak dapat dijangkau saat ini.
 
-Silakan ikuti langkah berikut untuk mengatasinya:
-1. Periksa apakah server backend Anda di terminal (npm run dev) masih aktif berjalan.
-2. Pastikan koneksi internet Anda berjalan dengan lancar.
-3. Coba kirim ulang pesan Anda beberapa saat lagi.`
+Yang bisa kamu lakukan:
+1. Pastikan koneksi internet kamu berjalan dengan baik.
+2. Tunggu beberapa saat lalu coba kirim ulang pesan kamu.
+3. Jika masalah berlanjut lebih dari 10 menit, coba refresh halaman ini.`
       } else {
-        // Fallback untuk general Internal Server Error atau error tak terduga lainnya
-        friendlyError = `Terjadi kesalahan internal pada server aplikasi (Internal Server Error).
+        friendlyError = `Layanan AI sedang mengalami gangguan sementara.
 
-Silakan ikuti langkah berikut untuk mengatasinya:
-1. Pastikan database Supabase Anda aktif dan tidak kehabisan kuota koneksi.
-2. Periksa apakah server backend Anda di terminal (npm run dev) mengalami crash atau menampilkan log error tertentu.
-3. Gunakan tombol "+ Baru" di atas untuk membuat percakapan baru jika percakapan ini tersangkut error.
-4. Coba jalankan ulang server backend Anda jika masalah berlanjut.`
+Yang bisa kamu lakukan:
+1. Coba kirim ulang pesan kamu beberapa saat lagi.
+2. Jika masih gagal, klik tombol "+ Baru" di atas untuk memulai percakapan baru.
+3. Semua fitur lain seperti transaksi dan laporan tetap bisa digunakan seperti biasa.`
       }
 
       const afterErrorSessions = updatedSessions.map(s => {
