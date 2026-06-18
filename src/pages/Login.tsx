@@ -109,12 +109,12 @@ export default function Login() {
             {/* Right — Login Card */}
             <FadeIn delay={1100} duration={900}>
               <div className="w-full max-w-sm lg:max-w-[360px]" style={{
-                background: 'rgba(6,6,6,0.88)',
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(10,10,10,0.72)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: '20px',
-                boxShadow: '0 32px 64px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06)',
+                boxShadow: '0 32px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
                 padding: '32px',
               }}>
 
