@@ -109,12 +109,12 @@ export default function Login() {
             {/* Right — Login Card */}
             <FadeIn delay={1100} duration={900}>
               <div className="w-full max-w-sm lg:max-w-[360px]" style={{
-                background: 'rgba(10,10,10,0.72)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(6,6,6,0.88)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                border: '1px solid rgba(255,255,255,0.08)',
                 borderRadius: '20px',
-                boxShadow: '0 32px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
+                boxShadow: '0 32px 64px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06)',
                 padding: '32px',
               }}>
 
@@ -138,12 +138,12 @@ export default function Login() {
                       required
                       className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none transition-all duration-200"
                       style={{
-                        background: 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)',
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.4)',
                       }}
-                      onFocus={e => { e.currentTarget.style.border = '1px solid rgba(245,158,11,0.6)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1), inset 0 1px 2px rgba(0,0,0,0.3)' }}
-                      onBlur={e => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.3)' }}
+                      onFocus={e => { e.currentTarget.style.border = '1px solid rgba(245,158,11,0.6)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1), inset 0 1px 2px rgba(0,0,0,0.4)' }}
+                      onBlur={e => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.4)' }}
                     />
                   </div>
 
@@ -160,12 +160,12 @@ export default function Login() {
                         required
                         className="w-full rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder-gray-600 focus:outline-none transition-all duration-200"
                         style={{
-                          background: 'rgba(255,255,255,0.05)',
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)',
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.4)',
                         }}
-                        onFocus={e => { e.currentTarget.style.border = '1px solid rgba(245,158,11,0.6)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1), inset 0 1px 2px rgba(0,0,0,0.3)' }}
-                        onBlur={e => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.3)' }}
+                        onFocus={e => { e.currentTarget.style.border = '1px solid rgba(245,158,11,0.6)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1), inset 0 1px 2px rgba(0,0,0,0.4)' }}
+                        onBlur={e => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.4)' }}
                       />
                       <button type="button" tabIndex={-1} onClick={() => setShowPw(!showPw)}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-amber-400 transition-colors"

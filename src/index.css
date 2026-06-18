@@ -63,3 +63,13 @@ input, select, textarea {
   mask-composite: exclude;
   pointer-events: none;
 }
+
+/* Fix browser autofill overriding dark input background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 9999px #111 inset !important;
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #fff;
+}
