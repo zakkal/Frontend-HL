@@ -5,46 +5,23 @@ import { useToast } from '../context/ToastContext'
 import { Eye, EyeOff, LogIn } from 'lucide-react'
 
 // ─── Animated Heading ─────────────────────────────────────────
-interface AnimatedHeadingProps {
-  text: string
-  className?: string
-  initialDelay?: number
-  charDelay?: number
-}
-
-function AnimatedHeading({ text, className = '', initialDelay = 200, charDelay = 30 }: AnimatedHeadingProps) {
+function AnimatedHeading({ text, initialDelay = 200, charDelay = 28 }: { text: string; initialDelay?: number; charDelay?: number }) {
   const [animated, setAnimated] = useState(false)
-
-  useEffect(() => {
-    const t = setTimeout(() => setAnimated(true), initialDelay)
-    return () => clearTimeout(t)
-  }, [initialDelay])
-
+  useEffect(() => { const t = setTimeout(() => setAnimated(true), initialDelay); return () => clearTimeout(t) }, [initialDelay])
   const lines = text.split('\n')
-
   return (
-    <h1 className={className}>
-      {lines.map((line, lineIndex) => {
-        const prevLineLength = lines.slice(0, lineIndex).reduce((acc, l) => acc + l.length, 0)
+    <h1 className="text-4xl md:text-5xl lg:text-[56px] font-normal text-white leading-tight" style={{ letterSpacing: '-0.03em' }}>
+      {lines.map((line, li) => {
+        const offset = lines.slice(0, li).reduce((a, l) => a + l.length, 0)
         return (
-          <span key={lineIndex} className="block">
-            {line.split('').map((char, charIndex) => {
-              const globalIndex = prevLineLength + charIndex
-              const delay = (globalIndex * charDelay)
-              return (
-                <span
-                  key={charIndex}
-                  className="inline-block"
-                  style={{
-                    opacity: animated ? 1 : 0,
-                    transform: animated ? 'translateX(0)' : 'translateX(-18px)',
-                    transition: `opacity 500ms ease ${delay}ms, transform 500ms ease ${delay}ms`,
-                  }}
-                >
-                  {char === ' ' ? '\u00A0' : char}
-                </span>
-              )
-            })}
+          <span key={li} className="block">
+            {line.split('').map((char, ci) => (
+              <span key={ci} className="inline-block" style={{
+                opacity: animated ? 1 : 0,
+                transform: animated ? 'translateX(0)' : 'translateX(-16px)',
+                transition: `opacity 480ms ease ${(offset + ci) * charDelay}ms, transform 480ms ease ${(offset + ci) * charDelay}ms`,
+              }}>{char === ' ' ? '\u00A0' : char}</span>
+            ))}
           </span>
         )
       })}
@@ -52,33 +29,11 @@ function AnimatedHeading({ text, className = '', initialDelay = 200, charDelay =
   )
 }
 
-// ─── FadeIn wrapper ───────────────────────────────────────────
-interface FadeInProps {
-  children: React.ReactNode
-  delay?: number
-  duration?: number
-  className?: string
-}
-
-function FadeIn({ children, delay = 0, duration = 1000, className = '' }: FadeInProps) {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), delay)
-    return () => clearTimeout(t)
-  }, [delay])
-
-  return (
-    <div
-      className={`transition-opacity ${className}`}
-      style={{
-        opacity: visible ? 1 : 0,
-        transitionDuration: `${duration}ms`,
-      }}
-    >
-      {children}
-    </div>
-  )
+// ─── FadeIn ───────────────────────────────────────────────────
+function FadeIn({ children, delay = 0, duration = 900, className = '' }: { children: React.ReactNode; delay?: number; duration?: number; className?: string }) {
+  const [v, setV] = useState(false)
+  useEffect(() => { const t = setTimeout(() => setV(true), delay); return () => clearTimeout(t) }, [delay])
+  return <div className={`transition-opacity ${className}`} style={{ opacity: v ? 1 : 0, transitionDuration: `${duration}ms` }}>{children}</div>
 }
 
 // ─── Login Page ───────────────────────────────────────────────
@@ -108,142 +63,135 @@ export default function Login() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col">
 
-      {/* ── Video Background ── */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-      >
-        <source
-          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260403_050628_c4e32401-fab4-4a27-b7a8-6e9291cd5959.mp4"
-          type="video/mp4"
-        />
+      {/* Video Background */}
+      <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260403_050628_c4e32401-fab4-4a27-b7a8-6e9291cd5959.mp4" type="video/mp4" />
       </video>
 
-      {/* ── Content Layer ── */}
-      <div className="relative z-10 flex flex-col min-h-screen px-6 md:px-12 lg:px-16">
+      {/* Subtle bottom gradient so text is readable */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
 
-        {/* Navbar */}
-        <div className="pt-6">
-          <nav className="liquid-glass rounded-xl px-4 py-2 flex items-center justify-between">
-            {/* Logo */}
-            <span className="text-xl font-semibold tracking-tight text-white">HL Sales</span>
+      {/* Content */}
+      <div className="relative z-10 flex flex-col min-h-screen px-6 md:px-12 lg:px-20">
 
-            {/* Center links */}
-            <div className="hidden md:flex items-center gap-8 text-sm text-white/80">
-              <a href="#" className="hover:text-gray-300 transition-colors">Transaksi</a>
-              <a href="#" className="hover:text-gray-300 transition-colors">Pelanggan</a>
-              <a href="#" className="hover:text-gray-300 transition-colors">Laporan</a>
-              <a href="#" className="hover:text-gray-300 transition-colors">AI Assistant</a>
+        {/* Top bar */}
+        <FadeIn delay={0} duration={600}>
+          <div className="pt-7 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
+                <span className="text-black font-bold text-sm">HL</span>
+              </div>
+              <span className="text-white font-semibold text-lg tracking-tight">HL Sales</span>
             </div>
+            <span className="text-white/40 text-sm hidden md:block">Receivables Management System</span>
+          </div>
+        </FadeIn>
 
-            {/* CTA */}
-            <button className="bg-white text-black px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
-              Masuk
-            </button>
-          </nav>
-        </div>
+        {/* Main layout — pushed to bottom */}
+        <div className="flex-1 flex flex-col justify-end pb-14 lg:pb-16">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10">
 
-        {/* Hero Content */}
-        <div className="flex-1 flex flex-col justify-end pb-12 lg:pb-16">
-          <div className="lg:grid lg:grid-cols-2 lg:items-end gap-8">
-
-            {/* Left — Main content */}
-            <div>
-              <AnimatedHeading
-                text={"Kelola piutang\ndengan cerdas dan cepat."}
-                initialDelay={200}
-                charDelay={30}
-                className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal text-white mb-4"
-              />
-
-              <FadeIn delay={800} duration={1000}>
-                <p className="text-base md:text-lg text-gray-300 mb-5">
-                  Platform manajemen penjualan & piutang dengan AI — dirancang untuk bisnis yang bergerak cepat.
+            {/* Left — Headline */}
+            <div className="max-w-xl">
+              <AnimatedHeading text={"Kelola piutang\ndengan cerdas."} initialDelay={300} charDelay={28} />
+              <FadeIn delay={900} duration={900}>
+                <p className="text-gray-300/80 text-base md:text-lg mt-4 mb-2 font-light leading-relaxed">
+                  Platform penjualan & piutang berbasis AI —<br className="hidden md:block" />
+                  dirancang untuk bisnis yang bergerak cepat.
                 </p>
-              </FadeIn>
-
-              {/* Login Card */}
-              <FadeIn delay={1200} duration={1000}>
-                <div className="liquid-glass border border-white/20 rounded-2xl p-6 max-w-sm">
-                  <h2 className="text-lg font-semibold text-white mb-1">Masuk ke Akun</h2>
-                  <p className="text-sm text-gray-400 mb-5">Masukkan kredensial Anda untuk melanjutkan</p>
-
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1.5">Alamat Email</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none transition-all duration-200"
-                        placeholder="admin@hlsales.id"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1.5">Password</label>
-                      <div className="relative">
-                        <input
-                          type={showPw ? 'text' : 'password'}
-                          name="password"
-                          value={password}
-                          onChange={e => setPassword(e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-12 text-white placeholder-gray-600 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none transition-all duration-200"
-                          placeholder="••••••••"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPw(!showPw)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-amber-400 transition-colors"
-                          tabIndex={-1}
-                          aria-label={showPw ? 'Sembunyikan password' : 'Tampilkan password'}
-                        >
-                          {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full flex items-center justify-center gap-2.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-black font-semibold py-3 rounded-xl transition-all duration-200 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loading ? (
-                        <>
-                          <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                          </svg>
-                          <span>Memproses...</span>
-                        </>
-                      ) : (
-                        <>
-                          <LogIn className="w-4 h-4" />
-                          <span>Masuk</span>
-                        </>
-                      )}
-                    </button>
-                  </form>
-
-                  <p className="text-center text-white/30 text-xs mt-5">
-                    © 2026 HL Sales &amp; Receivables. All Rights Reserved.
-                  </p>
+                <div className="flex items-center gap-2 mt-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="text-amber-400/80 text-sm font-medium">Penjualan · Piutang · Laporan · AI</span>
                 </div>
               </FadeIn>
             </div>
 
-            {/* Right — Tag card */}
-            <FadeIn delay={1400} duration={1000} className="flex items-end justify-start lg:justify-end mt-8 lg:mt-0">
-              <div className="liquid-glass border border-white/20 px-6 py-3 rounded-xl">
-                <p className="text-lg md:text-xl lg:text-2xl font-light text-white">
-                  Penjualan. Piutang. Laporan.
-                </p>
+            {/* Right — Login Card */}
+            <FadeIn delay={1100} duration={900}>
+              <div className="w-full max-w-sm lg:max-w-[360px]" style={{
+                background: 'rgba(10,10,10,0.72)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '20px',
+                boxShadow: '0 32px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
+                padding: '32px',
+              }}>
+
+                {/* Card header */}
+                <div className="mb-7">
+                  <p className="text-xs font-semibold text-amber-400/90 uppercase tracking-widest mb-2">Selamat datang</p>
+                  <h2 className="text-xl font-semibold text-white leading-snug">Masuk ke Akun</h2>
+                  <p className="text-sm text-gray-400 mt-1">Masukkan kredensial Anda untuk melanjutkan</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Email */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="admin@hlsales.id"
+                      required
+                      className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none transition-all duration-200"
+                      style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)',
+                      }}
+                      onFocus={e => { e.currentTarget.style.border = '1px solid rgba(245,158,11,0.6)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1), inset 0 1px 2px rgba(0,0,0,0.3)' }}
+                      onBlur={e => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.3)' }}
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPw ? 'text' : 'password'}
+                        name="password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        className="w-full rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder-gray-600 focus:outline-none transition-all duration-200"
+                        style={{
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)',
+                        }}
+                        onFocus={e => { e.currentTarget.style.border = '1px solid rgba(245,158,11,0.6)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1), inset 0 1px 2px rgba(0,0,0,0.3)' }}
+                        onBlur={e => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.3)' }}
+                      />
+                      <button type="button" tabIndex={-1} onClick={() => setShowPw(!showPw)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-amber-400 transition-colors"
+                        aria-label={showPw ? 'Sembunyikan' : 'Tampilkan'}>
+                        {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submit */}
+                  <button type="submit" disabled={loading}
+                    className="w-full flex items-center justify-center gap-2.5 font-semibold py-3 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                    style={{
+                      background: loading ? 'rgba(245,158,11,0.7)' : '#f59e0b',
+                      color: '#000',
+                      boxShadow: '0 4px 24px rgba(245,158,11,0.3)',
+                    }}>
+                    {loading ? (
+                      <><svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg><span>Memproses...</span></>
+                    ) : (
+                      <><LogIn className="w-4 h-4" /><span>Masuk</span></>
+                    )}
+                  </button>
+                </form>
+
+                <p className="text-center text-white/20 text-xs mt-6">© 2026 HL Sales &amp; Receivables. All Rights Reserved.</p>
               </div>
             </FadeIn>
 

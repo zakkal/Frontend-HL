@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, Users, Package, Receipt, BarChart3, LogOut, DollarSign } from 'lucide-react'
+import { LayoutDashboard, Users, Package, Receipt, BarChart3, LogOut } from 'lucide-react'
 import AiAssistant from './AiAssistant'
 
 const navItems = [
@@ -21,53 +21,78 @@ export default function Layout() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-950">
-      {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
-        <div className="p-6 border-b border-gray-800">
+    <div className="flex h-screen bg-[#0a0a0a]">
+
+      {/* ── Sidebar ── */}
+      <aside className="w-60 flex flex-col flex-shrink-0" style={{
+        background: 'linear-gradient(180deg, #111111 0%, #0d0d0d 100%)',
+        borderRight: '1px solid rgba(255,255,255,0.06)',
+      }}>
+
+        {/* Logo */}
+        <div className="px-5 pt-6 pb-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div className="flex items-center gap-3">
-            <DollarSign className="w-8 h-8 text-amber-400" />
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 4px 12px rgba(245,158,11,0.35)' }}>
+              <span className="text-black font-bold text-sm">HL</span>
+            </div>
             <div>
-              <h1 className="text-lg font-bold text-white">HL Sales</h1>
-              <p className="text-xs text-gray-500">Management App</p>
+              <h1 className="text-sm font-semibold text-white leading-none">HL Sales</h1>
+              <p className="text-[11px] text-gray-500 mt-0.5 leading-none">Management App</p>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5">
+          <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest px-3 mb-2">Menu</p>
           {navItems.map(item => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.to === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                   isActive
-                    ? 'bg-amber-400/10 text-amber-400'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    ? 'text-amber-400 bg-amber-400/8'
+                    : 'text-gray-500 hover:text-gray-200 hover:bg-white/5'
                 }`
               }
             >
-              <item.icon className="w-5 h-5" />
-              {item.label}
+              {({ isActive }) => (
+                <>
+                  <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-amber-400' : 'text-gray-500'}`} />
+                  <span>{item.label}</span>
+                  {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-gray-800">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-400 truncate">{user?.email}</span>
-            <button onClick={handleLogout} className="p-2 text-gray-500 hover:text-red-400 transition-colors">
-              <LogOut className="w-5 h-5" />
+        {/* User */}
+        <div className="px-3 pb-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+          <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
+            <div className="w-7 h-7 rounded-lg bg-amber-400/15 flex items-center justify-center flex-shrink-0">
+              <span className="text-amber-400 text-xs font-semibold">
+                {user?.email?.charAt(0).toUpperCase() ?? 'U'}
+              </span>
+            </div>
+            <span className="text-xs text-gray-400 truncate flex-1">{user?.email}</span>
+            <button onClick={handleLogout} className="text-gray-600 hover:text-red-400 transition-colors flex-shrink-0" title="Keluar">
+              <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto p-8">
-        <Outlet />
+      {/* ── Main content ── */}
+      <main className="flex-1 overflow-y-auto" style={{ background: '#0a0a0a' }}>
+        <div className="p-7">
+          <Outlet />
+        </div>
       </main>
+
       <AiAssistant />
     </div>
   )
