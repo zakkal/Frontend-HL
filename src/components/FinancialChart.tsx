@@ -134,75 +134,86 @@ export default function FinancialChart() {
         </div>
       ) : (
         <div className="relative">
-          {/* Y-axis guide lines */}
-          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none" style={{ paddingBottom: '28px' }}>
-            {[1, 0.75, 0.5, 0.25].map((ratio, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className="text-[9px] text-gray-700 w-8 text-right flex-shrink-0">
+          {/* Chart area */}
+          <div className="flex gap-0" style={{ height: '140px' }}>
+            {/* Y-axis labels */}
+            <div className="flex flex-col justify-between pr-2 flex-shrink-0" style={{ width: '44px', paddingBottom: '24px' }}>
+              {[1, 0.75, 0.5, 0.25, 0].map((ratio, i) => (
+                <span key={i} className="text-[9px] text-gray-600 text-right leading-none">
                   {fmt(maxVal * ratio)}
                 </span>
-                <div className="flex-1 border-t border-white/4" />
+              ))}
+            </div>
+
+            {/* Bars + grid */}
+            <div className="flex-1 relative">
+              {/* Horizontal grid lines */}
+              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none" style={{ paddingBottom: '24px' }}>
+                {[0, 1, 2, 3, 4].map(i => (
+                  <div key={i} className="w-full border-t" style={{ borderColor: 'rgba(255,255,255,0.04)' }} />
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Bars */}
-          <div className="flex items-end justify-between gap-1.5 pl-10" style={{ height: '120px', paddingBottom: '0px' }}>
-            {data.map((point, i) => {
-              const val = getValue(point)
-              const heightPct = maxVal > 0 ? (val / maxVal) * 100 : 0
-              const isActive = activeBar === i
-              const isCurrentMonth = i === data.length - 1
+              {/* Bars row */}
+              <div className="absolute inset-0 flex items-end gap-1.5 px-1" style={{ paddingBottom: '24px' }}>
+                {data.map((point, i) => {
+                  const val = getValue(point)
+                  const heightPct = maxVal > 0 ? (val / maxVal) * 100 : 0
+                  const isActive = activeBar === i
+                  const isCurrentMonth = i === data.length - 1
 
-              return (
-                <div
-                  key={i}
-                  className="flex-1 flex flex-col items-center justify-end gap-1 cursor-pointer group"
-                  style={{ height: '100%' }}
-                  onMouseEnter={() => setActiveBar(i)}
-                  onMouseLeave={() => setActiveBar(null)}
-                >
-                  {/* Tooltip */}
-                  {isActive && (
-                    <div className="absolute bottom-10 z-10 px-3 py-2 rounded-xl text-xs text-white whitespace-nowrap pointer-events-none"
-                      style={{
-                        background: '#1a1a1a',
-                        border: `1px solid ${activeTab.color}40`,
-                        boxShadow: `0 8px 24px rgba(0,0,0,0.5)`,
-                        transform: 'translateX(-50%)',
-                        left: `${(i / (data.length - 1)) * 100}%`,
-                      }}>
-                      <p className="font-semibold" style={{ color: activeTab.color }}>{point.label}</p>
-                      <p className="text-gray-400 mt-0.5">Rp {fmtFull(val)}</p>
+                  return (
+                    <div
+                      key={i}
+                      className="flex-1 flex flex-col justify-end relative"
+                      style={{ height: '100%' }}
+                      onMouseEnter={() => setActiveBar(i)}
+                      onMouseLeave={() => setActiveBar(null)}
+                    >
+                      {/* Tooltip */}
+                      {isActive && (
+                        <div className="absolute z-20 px-2.5 py-1.5 rounded-lg text-xs text-white whitespace-nowrap pointer-events-none"
+                          style={{
+                            background: '#1c1c1c',
+                            border: `1px solid ${activeTab.color}40`,
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+                            bottom: '100%',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            marginBottom: '6px',
+                          }}>
+                          <p className="font-semibold" style={{ color: activeTab.color }}>{point.label}</p>
+                          <p className="text-gray-400 mt-0.5">Rp {fmtFull(val)}</p>
+                        </div>
+                      )}
+
+                      {/* Bar */}
+                      <div
+                        className="w-full rounded-t-md cursor-pointer transition-all duration-200"
+                        style={{
+                          height: `${Math.max(heightPct, 2)}%`,
+                          background: isActive || isCurrentMonth
+                            ? `linear-gradient(180deg, ${activeTab.color}, ${activeTab.color}99)`
+                            : `linear-gradient(180deg, ${activeTab.color}55, ${activeTab.color}25)`,
+                          boxShadow: isActive ? `0 0 10px ${activeTab.color}55` : 'none',
+                        }}
+                      />
                     </div>
-                  )}
-
-                  {/* Bar */}
-                  <div
-                    className="w-full rounded-t-lg transition-all duration-300"
-                    style={{
-                      height: `${Math.max(heightPct, 2)}%`,
-                      background: isActive || isCurrentMonth
-                        ? `linear-gradient(180deg, ${activeTab.color}, ${activeTab.color}88)`
-                        : `linear-gradient(180deg, ${activeTab.color}60, ${activeTab.color}30)`,
-                      boxShadow: isActive ? `0 0 12px ${activeTab.color}50` : 'none',
-                      transition: 'height 0.4s ease, background 0.2s',
-                    }}
-                  />
-                </div>
-              )
-            })}
-          </div>
-
-          {/* X-axis labels */}
-          <div className="flex justify-between pl-10 mt-2">
-            {data.map((point, i) => (
-              <div key={i} className="flex-1 text-center">
-                <span className="text-[10px]" style={{ color: i === data.length - 1 ? activeTab.color : '#4b5563' }}>
-                  {point.label}
-                </span>
+                  )
+                })}
               </div>
-            ))}
+
+              {/* X-axis labels */}
+              <div className="absolute bottom-0 left-0 right-0 flex gap-1.5 px-1" style={{ height: '20px' }}>
+                {data.map((point, i) => (
+                  <div key={i} className="flex-1 text-center">
+                    <span className="text-[9px]" style={{ color: i === data.length - 1 ? activeTab.color : '#4b5563' }}>
+                      {point.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
