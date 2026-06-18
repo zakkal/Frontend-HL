@@ -4,6 +4,7 @@ import {
   Users, Package, AlertTriangle, Zap, RefreshCw,
   ShieldAlert, CalendarClock, Activity, Sparkles, Bell,
 } from 'lucide-react'
+import FinancialChart from '../components/FinancialChart'
 
 const fmt = (n: number) => Number(n).toLocaleString('id-ID')
 
@@ -140,6 +141,9 @@ export default function Dashboard() {
         <StatCard label="Bon Overdue" value={overdue.reduce((s, a) => s + a.overdueTransactions.length, 0)} icon={AlertTriangle} accent="#f87171" />
         <StatCard label="Anomali" value={anomalies.length} icon={Zap} accent="#f59e0b" />
       </div>
+
+      {/* Financial Chart */}
+      <FinancialChart />
 
       {/* Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

@@ -54,6 +54,7 @@ export const api = {
   // Reports
   getRecap: (type: string, month: number, year: number) =>
     request<any>(`/reports/recap?type=${type}&month=${month}&year=${year}`),
+  getMonthlyChart: () => request<any[]>('/reports/chart'),
   exportPdf: (type: string, month: number, year: number) =>
     fetch(BASE + '/reports/export-pdf', {
       method: 'POST',
