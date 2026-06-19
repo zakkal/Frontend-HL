@@ -96,7 +96,7 @@ export default function Dashboard() {
       const totalOverdueTx = (overdueData as any[]).reduce((s: number, a: any) => s + a.overdueTransactions.length, 0)
       setStats({ customers: customers.length, products: products.length, transactions: totalOverdueTx })
     })
-    loadRisk(); loadPredictions(); loadOverdue(); loadAnomalies()
+    loadRisk(); loadPredictions(); loadOverdue(); loadAnomalies(); loadSummary()
   }, [])
 
   const loadAllAI = () => { loadRisk(); loadPredictions(); loadOverdue(); loadAnomalies(); loadSummary() }
@@ -156,14 +156,7 @@ export default function Dashboard() {
               {summaryLines.map((line, i) => <p key={i}>{line}</p>)}
             </div>
           ) : (
-            <div className="flex flex-col items-center py-6 gap-3">
-              <p className="text-xs text-gray-600 text-center">Klik untuk generate ringkasan bisnis hari ini</p>
-              <button onClick={loadSummary}
-                className="flex items-center gap-2 text-xs font-medium text-amber-400 px-4 py-2 rounded-xl transition-colors hover:bg-amber-400/10"
-                style={{ border: '1px solid rgba(245,158,11,0.2)' }}>
-                <Sparkles className="w-3.5 h-3.5" /> Generate Ringkasan
-              </button>
-            </div>
+            <Skeleton rows={5} />
           )}
         </SectionCard>
 
