@@ -26,7 +26,7 @@ export const api = {
     request<any>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   logout: () => request('/auth/logout', { method: 'POST' }),
   changePassword: (newPassword: string) =>
-    request('/auth/change-password', { method: 'POST', body: JSON.stringify({ newPassword }) }),
+    request<{ new_token: string | null; new_refresh_token: string | null }>('/auth/change-password', { method: 'POST', body: JSON.stringify({ newPassword }) }),
 
   // Customers
   getCustomers: () => request<any[]>('/customers'),

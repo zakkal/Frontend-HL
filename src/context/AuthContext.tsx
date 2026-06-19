@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode } from 'react'
 import { api } from '../lib/api'
 
 interface AuthState {
@@ -6,6 +6,7 @@ interface AuthState {
   user: { id: string; email: string } | null
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
+  updateToken: (newToken: string) => void
 }
 
 const AuthContext = createContext<AuthState>({} as AuthState)
@@ -30,8 +31,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
+  const updateToken = (newToken: string) => {
+    localStorage.setItem('hl_token', newToken)
+    setToken(newToken)
+  }
+
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider value={{ token, user, login, logout, updateToken }}>
       {children}
     </AuthContext.Provider>
   )
