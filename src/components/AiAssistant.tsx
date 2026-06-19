@@ -245,7 +245,7 @@ export default function AiAssistant() {
       let friendlyError = `Maaf, terjadi kesalahan: ${err.message || 'Gagal terhubung dengan server AI.'}`
       
       const errMsg = (err.message || '').toLowerCase()
-      if (errMsg.includes('token') || errMsg.includes('expired') || errMsg.includes('unauthorized') || errMsg.includes('jwt')) {
+      if (errMsg.includes('token') || errMsg.includes('expired') || errMsg.includes('unauthorized') || errMsg.includes('jwt') || errMsg.includes('sesi') || errMsg.includes('login')) {
         friendlyError = `Sesi kamu telah berakhir karena sudah terlalu lama tidak aktif.
 
 Yang perlu kamu lakukan:
