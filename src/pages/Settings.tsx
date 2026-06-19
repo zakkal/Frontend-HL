@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { Eye, EyeOff, Lock, User, Shield, History } from 'lucide-react'
+import { Eye, EyeOff, Lock, User, Shield } from 'lucide-react'
 
 // ─── Simple password history (hashed with Web Crypto) ────────
 async function hashPassword(pw: string): Promise<string> {
@@ -23,8 +24,9 @@ function savePasswordHistory(hash: string) {
 }
 
 export default function Settings() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { success, error } = useToast()
+  const navigate = useNavigate()
 
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -49,9 +51,15 @@ export default function Settings() {
     try {
       await api.changePassword(newPassword)
       savePasswordHistory(hash)
-      success('Password berhasil diubah')
+      success('Password berhasil diubah. Silakan login kembali dengan password baru.')
       setNewPassword('')
       setConfirmPassword('')
+      // Supabase invalidate semua sesi saat password berubah
+      // Logout otomatis agar user login ulang dengan password baru
+      setTimeout(async () => {
+        await logout()
+        navigate('/login')
+      }, 2000)
     } catch (err: any) {
       error(err.message || 'Gagal mengubah password')
     }
@@ -111,7 +119,7 @@ export default function Settings() {
           </div>
           <div>
             <h2 className="text-sm font-semibold text-white">Ganti Password</h2>
-            <p className="text-xs text-gray-600 mt-0.5">Minimal 6 karakter · Tidak boleh sama dengan password sebelumnya</p>
+            <p className="text-xs text-gray-600 mt-0.5">Minimal 6 karakter · Tidak boleh sama dengan password sebelumnya · Anda akan otomatis keluar setelah menyimpan</p>
           </div>
         </div>
 
