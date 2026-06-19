@@ -184,10 +184,10 @@ export default function Settings() {
           <h2 className="text-sm font-semibold text-white">Keamanan</h2>
         </div>
         <div className="space-y-2 text-xs text-gray-600">
-          <p>• Sesi otomatis berakhir setelah 15 menit tidak aktif</p>
-          <p>• Autentikasi menggunakan Supabase Auth (JWT)</p>
-          <p>• Semua data dienkripsi dalam transit (HTTPS)</p>
-          <p>• Histori 5 password terakhir tidak dapat digunakan kembali</p>
+          <p>• Akun Anda akan otomatis keluar jika tidak ada aktivitas selama 15 menit</p>
+          <p>• Password disimpan secara aman dan tidak dapat dilihat oleh siapapun</p>
+          <p>• Seluruh data dikirim melalui koneksi terenkripsi yang aman</p>
+          <p>• 5 password terakhir tidak dapat digunakan kembali</p>
         </div>
       </div>
 
