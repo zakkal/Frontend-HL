@@ -73,3 +73,13 @@ input:-webkit-autofill:active {
   -webkit-text-fill-color: #fff !important;
   caret-color: #fff;
 }
+
+/* Fix native select dropdown background */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
