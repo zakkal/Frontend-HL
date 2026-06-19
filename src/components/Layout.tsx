@@ -9,6 +9,7 @@ const navItems = [
   { to: '/products', icon: Package, label: 'Produk' },
   { to: '/transactions', icon: Receipt, label: 'Transaksi' },
   { to: '/reports', icon: BarChart3, label: 'Laporan' },
+  { to: '/settings', icon: Settings, label: 'Pengaturan' },
 ]
 
 export default function Layout() {
@@ -72,17 +73,6 @@ export default function Layout() {
 
         {/* User */}
         <div className="px-3 pb-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
-          <NavLink to="/settings"
-            className={({ isActive }) =>
-              `flex items-center gap-2.5 px-3 py-2 rounded-xl mb-2 transition-all text-xs font-medium ${isActive ? 'text-amber-400 bg-amber-400/8' : 'text-gray-500 hover:text-gray-200 hover:bg-white/5'}`
-            }>
-            {({ isActive }) => (
-              <>
-                <Settings className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-amber-400' : 'text-gray-500'}`} />
-                <span>Pengaturan</span>
-              </>
-            )}
-          </NavLink>
           <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
             <div className="w-7 h-7 rounded-lg bg-amber-400/15 flex items-center justify-center flex-shrink-0">
               <span className="text-amber-400 text-xs font-semibold">

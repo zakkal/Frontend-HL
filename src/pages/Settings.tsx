@@ -2,7 +2,25 @@ import { useState } from 'react'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { Eye, EyeOff, Lock, User, Shield } from 'lucide-react'
+import { Eye, EyeOff, Lock, User, Shield, History } from 'lucide-react'
+
+// ─── Simple password history (hashed with Web Crypto) ────────
+async function hashPassword(pw: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw))
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+function getPasswordHistory(): string[] {
+  try { return JSON.parse(localStorage.getItem('hl_pw_history') || '[]') } catch { return [] }
+}
+
+function savePasswordHistory(hash: string) {
+  const history = getPasswordHistory()
+  if (!history.includes(hash)) {
+    history.unshift(hash)
+    localStorage.setItem('hl_pw_history', JSON.stringify(history.slice(0, 5))) // simpan 5 terakhir
+  }
+}
 
 export default function Settings() {
   const { user } = useAuth()
@@ -19,9 +37,18 @@ export default function Settings() {
     if (newPassword.length < 6) { error('Password minimal 6 karakter'); return }
     if (newPassword !== confirmPassword) { error('Konfirmasi password tidak cocok'); return }
 
+    // Cek histori password
+    const hash = await hashPassword(newPassword)
+    const history = getPasswordHistory()
+    if (history.includes(hash)) {
+      error('Password ini pernah digunakan sebelumnya. Gunakan password yang berbeda.')
+      return
+    }
+
     setLoading(true)
     try {
       await api.changePassword(newPassword)
+      savePasswordHistory(hash)
       success('Password berhasil diubah')
       setNewPassword('')
       setConfirmPassword('')
@@ -84,7 +111,7 @@ export default function Settings() {
           </div>
           <div>
             <h2 className="text-sm font-semibold text-white">Ganti Password</h2>
-            <p className="text-xs text-gray-600 mt-0.5">Minimal 6 karakter</p>
+            <p className="text-xs text-gray-600 mt-0.5">Minimal 6 karakter · Tidak boleh sama dengan password sebelumnya</p>
           </div>
         </div>
 
@@ -160,6 +187,7 @@ export default function Settings() {
           <p>• Sesi otomatis berakhir setelah 15 menit tidak aktif</p>
           <p>• Autentikasi menggunakan Supabase Auth (JWT)</p>
           <p>• Semua data dienkripsi dalam transit (HTTPS)</p>
+          <p>• Histori 5 password terakhir tidak dapat digunakan kembali</p>
         </div>
       </div>
 
