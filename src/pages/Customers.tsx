@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { useToast } from '../context/ToastContext'
-import { Plus, Pencil, Trash2, X, ShieldAlert, ShieldCheck, ShieldBan } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, ShieldAlert, ShieldCheck, ShieldBan, Search } from 'lucide-react'
 import RupiahInput from '../components/RupiahInput'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 const fmt = (n: number) => Number(n).toLocaleString('id-ID')
 
@@ -51,8 +52,10 @@ export default function Customers() {
   const [riskMap, setRiskMap] = useState<Record<string, 'low' | 'medium' | 'high'>>({})
   const [loading, setLoading] = useState(true)
   const [loadingRisk, setLoadingRisk] = useState(false)
+  const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<any>(null)
+  const [deleteTarget, setDeleteTarget] = useState<any>(null)
   const [form, setForm] = useState({ name: '', bonus_threshold: 0, discounts: [] as any[] })
   const { success, error } = useToast()
 
@@ -110,10 +113,11 @@ export default function Customers() {
     } catch (err: any) { error(err.message) }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Yakin hapus pelanggan ini?')) return
-    try { await api.deleteCustomer(id); success('Pelanggan berhasil dihapus'); load() }
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    try { await api.deleteCustomer(deleteTarget.id); success('Pelanggan berhasil dihapus'); load() }
     catch (err: any) { error(err.message) }
+    setDeleteTarget(null)
   }
 
   const addDiscount = () => {
@@ -146,8 +150,18 @@ export default function Customers() {
           <Plus className="w-4 h-4" /> Tambah Pelanggan
         </button>
       </div>
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600" />
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Cari nama pelanggan..."
+          className="w-full rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+        />
+      </div>
 
-      {/* Table */}
       {loading ? (
         <div className="space-y-2">
           {[...Array(4)].map((_, i) => (
@@ -176,9 +190,9 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
-              {customers.map((c, idx) => (
+              {customers.filter(c => c.name.toLowerCase().includes(search.toLowerCase())).map((c, idx, arr) => (
                 <tr key={c.id}
-                  style={{ borderBottom: idx < customers.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                  style={{ borderBottom: idx < arr.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
                   className="hover:bg-white/[0.02] transition-colors">
 
                   {/* Nama */}
@@ -204,13 +218,9 @@ export default function Customers() {
                   {/* Diskon LM */}
                   <td className="px-5 py-4">
                     <div>
-                      <span className="text-sm text-gray-300">
-                        {getDiscountLabel(c.discounts, 'LM')}
-                      </span>
+                      <span className="text-sm text-gray-300">{getDiscountLabel(c.discounts, 'LM')}</span>
                       {c.effective_discount_lm > 0 && (
-                        <p className="text-[10px] text-gray-600 mt-0.5">
-                          Efektif {c.effective_discount_lm?.toFixed(1)}%
-                        </p>
+                        <p className="text-[10px] text-gray-600 mt-0.5">Efektif {c.effective_discount_lm?.toFixed(1)}%</p>
                       )}
                     </div>
                   </td>
@@ -218,13 +228,9 @@ export default function Customers() {
                   {/* Diskon BR */}
                   <td className="px-5 py-4">
                     <div>
-                      <span className="text-sm text-gray-300">
-                        {getDiscountLabel(c.discounts, 'BR')}
-                      </span>
+                      <span className="text-sm text-gray-300">{getDiscountLabel(c.discounts, 'BR')}</span>
                       {c.effective_discount_br > 0 && (
-                        <p className="text-[10px] text-gray-600 mt-0.5">
-                          Efektif {c.effective_discount_br?.toFixed(1)}%
-                        </p>
+                        <p className="text-[10px] text-gray-600 mt-0.5">Efektif {c.effective_discount_br?.toFixed(1)}%</p>
                       )}
                     </div>
                   </td>
@@ -241,7 +247,7 @@ export default function Customers() {
                         className="p-2 rounded-lg text-gray-600 hover:text-amber-400 hover:bg-amber-400/10 transition-all">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => handleDelete(c.id)}
+                      <button onClick={() => setDeleteTarget(c)}
                         className="p-2 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-all">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -249,10 +255,10 @@ export default function Customers() {
                   </td>
                 </tr>
               ))}
-              {customers.length === 0 && (
+              {customers.filter(c => c.name.toLowerCase().includes(search.toLowerCase())).length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-5 py-16 text-center text-gray-600 text-sm">
-                    Belum ada pelanggan terdaftar
+                    {search ? 'Tidak ada pelanggan yang sesuai pencarian' : 'Belum ada pelanggan terdaftar'}
                   </td>
                 </tr>
               )}
@@ -385,6 +391,15 @@ export default function Customers() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Hapus Pelanggan"
+        message={`Yakin ingin menghapus pelanggan "${deleteTarget?.name}"? Semua data diskon terkait akan ikut terhapus.`}
+        confirmLabel="Hapus Pelanggan"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
 }
