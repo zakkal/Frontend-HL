@@ -50,8 +50,8 @@ export default function Settings() {
       const result = await api.changePassword(newPassword)
       savePasswordHistory(hash)
 
-      // Update token di memory tanpa logout — user tetap di halaman ini
-      if (result.new_token) {
+      // Update token di memory tanpa logout
+      if (result && result.new_token) {
         updateToken(result.new_token)
       }
 
