@@ -29,7 +29,7 @@ function StatCard({ label, value, icon: Icon, accent }: { label: string; value: 
 // ─── Section Card ─────────────────────────────────────────────
 function SectionCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl p-5 ${className}`} style={{
+    <div className={`rounded-2xl p-5 self-start ${className}`} style={{
       background: 'linear-gradient(145deg, #141414, #111)',
       border: '1px solid rgba(255,255,255,0.06)',
     }}>
@@ -146,7 +146,7 @@ export default function Dashboard() {
       <FinancialChart />
 
       {/* Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
         {/* AI Summary */}
         <SectionCard>
@@ -177,30 +177,33 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-              <div className="space-y-1.5">
-                {[...highRisk, ...medRisk].slice(0, 4).map(r => (
-                  <div key={r.customerId} className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-white font-medium truncate">{r.customerName}</p>
-                      <p className="text-xs text-gray-600 truncate mt-0.5">{r.summary}</p>
+              {[...highRisk, ...medRisk].length > 0 ? (
+                <div className="space-y-1.5">
+                  {[...highRisk, ...medRisk].slice(0, 4).map(r => (
+                    <div key={r.customerId} className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-white font-medium truncate">{r.customerName}</p>
+                        <p className="text-xs text-gray-600 truncate mt-0.5">{r.summary}</p>
+                      </div>
+                      <span className="ml-3 flex-shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                        style={{ background: `${riskColor(r.risk)}15`, color: riskColor(r.risk), border: `1px solid ${riskColor(r.risk)}30` }}>
+                        {r.riskLabel}
+                      </span>
                     </div>
-                    <span className="ml-3 flex-shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                      style={{ background: `${riskColor(r.risk)}15`, color: riskColor(r.risk), border: `1px solid ${riskColor(r.risk)}30` }}>
-                      {r.riskLabel}
-                    </span>
-                  </div>
-                ))}
-                {highRisk.length === 0 && medRisk.length === 0 && (
-                  <p className="text-xs text-center py-3" style={{ color: '#4ade80' }}>Semua pelanggan dalam kondisi baik</p>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-2 gap-2">
+                  <span style={{ color: '#4ade80' }} className="text-xs font-medium">✓ Semua pelanggan dalam kondisi baik</span>
+                </div>
+              )}
             </>
           )}
         </SectionCard>
       </div>
 
       {/* Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
         {/* Overdue */}
         <SectionCard>
