@@ -151,12 +151,16 @@ export default function Dashboard() {
         {/* AI Summary */}
         <SectionCard>
           <SectionHeader icon={Sparkles} iconColor="#f59e0b" title="Ringkasan Bisnis Hari Ini" onRefresh={loadSummary} loading={loadingSummary} />
-          {loadingSummary ? <Skeleton rows={5} /> : dailySummary ? (
-            <div className="space-y-1.5 text-sm text-gray-400 leading-relaxed">
-              {summaryLines.map((line, i) => <p key={i}>{line}</p>)}
+          {loadingSummary ? <Skeleton rows={4} /> : dailySummary ? (
+            <div className="space-y-1 text-xs text-gray-400 leading-relaxed max-h-64 overflow-y-auto pr-1">
+              {summaryLines.map((line, i) => (
+                <p key={i} className={line === '' ? 'h-1' : line.startsWith('📋') || line.startsWith('📌') || line.startsWith('💰') || line.startsWith('📈') || line.startsWith('📊') || line.startsWith('⚠️') || line.startsWith('✅') || line.startsWith('💡') ? 'text-white text-xs font-semibold mt-2 first:mt-0' : ''}>
+                  {line}
+                </p>
+              ))}
             </div>
           ) : (
-            <Skeleton rows={5} />
+            <Skeleton rows={4} />
           )}
         </SectionCard>
 
