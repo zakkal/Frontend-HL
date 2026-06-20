@@ -99,14 +99,15 @@ export default function SessionExpiredModal() {
             <button onClick={handleGoToLogin}
               className="flex-1 py-3 rounded-xl text-sm font-medium text-gray-400 transition-colors"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              Keluar
+              Keluar Sekarang
             </button>
             <button onClick={handleContinue}
               className="flex-1 py-3 rounded-xl text-sm font-semibold text-black transition-all"
               style={{ background: '#f59e0b', boxShadow: '0 4px 16px rgba(245,158,11,0.3)' }}>
-              Lanjutkan Sesi
+              Ya, Saya Masih Di Sini
             </button>
           </div>
+          <p className="text-xs text-gray-600 mt-3">Klik <span className="text-amber-400">"Ya, Saya Masih Di Sini"</span> agar tidak perlu login ulang</p>
         </div>
       </div>
     )
@@ -135,9 +136,9 @@ export default function SessionExpiredModal() {
           className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm font-semibold text-black transition-all"
           style={{ background: '#f59e0b', boxShadow: '0 4px 20px rgba(245,158,11,0.35)' }}>
           <LogIn className="w-4 h-4" />
-          Masuk Kembali
+          Klik Di Sini untuk Login Kembali
         </button>
-        <p className="text-xs text-gray-700 mt-4">Semua perubahan yang belum disimpan mungkin telah hilang.</p>
+        <p className="text-xs text-gray-600 mt-3">Tombol di atas akan membawa Anda ke halaman login</p>
       </div>
     </div>
   )

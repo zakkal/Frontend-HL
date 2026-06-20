@@ -272,13 +272,15 @@ export default function Transactions() {
                         <td className="px-5 py-4 text-right">
                           {tx.status === 'Piutang' ? (
                             <div className="flex items-center justify-end gap-2">
-                              <button onClick={() => handleDraftReminder(tx.id)} title="Draft WA"
-                                className="p-2 rounded-lg text-gray-600 hover:text-amber-400 hover:bg-amber-400/10 transition-all">
+                              <button onClick={() => handleDraftReminder(tx.id)}
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-amber-400 hover:bg-amber-400/10 transition-all">
                                 <Sparkles className="w-3.5 h-3.5" />
+                                <span>Kirim WA</span>
                               </button>
-                              <button onClick={() => setSettleTarget(tx)} title="Lunasi"
-                                className="p-2 rounded-lg text-gray-600 hover:text-green-400 hover:bg-green-400/10 transition-all">
+                              <button onClick={() => setSettleTarget(tx)}
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-green-400 hover:bg-green-400/10 transition-all">
                                 <CheckCircle className="w-3.5 h-3.5" />
+                                <span>Lunasi</span>
                               </button>
                             </div>
                           ) : (
