@@ -2,6 +2,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { LayoutDashboard, Users, Package, Receipt, BarChart3, LogOut, Settings } from 'lucide-react'
 import AiAssistant from './AiAssistant'
+import SessionExpiredModal from './SessionExpiredModal'
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -116,6 +117,7 @@ export default function Layout() {
       </main>
 
       <AiAssistant />
+      <SessionExpiredModal />
     </div>
   )
 }
