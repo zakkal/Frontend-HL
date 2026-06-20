@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import Layout from './components/Layout'
@@ -9,40 +9,23 @@ import Products from './pages/Products'
 import Transactions from './pages/Transactions'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
-import SessionExpiredModal from './components/SessionExpiredModal'
-import { useSessionTimeout } from './hooks/useSessionTimeout'
 
-function AppInner() {
-  const { token, logout } = useAuth()
-  const navigate = useNavigate()
-
-  const handleExpired = () => {
-    // Token sudah tidak valid, cukup clear local state
-    logout()
-  }
-
-  const { expired, clearExpired } = useSessionTimeout(!!token, handleExpired)
-
-  const handleLogin = () => {
-    clearExpired()
-    navigate('/login')
-  }
+export default function App() {
+  const { token } = useAuth()
 
   if (!token) {
     return (
-      <>
-        <SessionExpiredModal open={expired} onLogin={handleLogin} />
+      <ToastProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
-      </>
+      </ToastProvider>
     )
   }
 
   return (
-    <>
-      <SessionExpiredModal open={expired} onLogin={handleLogin} />
+    <ToastProvider>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
@@ -54,14 +37,6 @@ function AppInner() {
         </Route>
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </>
-  )
-}
-
-export default function App() {
-  return (
-    <ToastProvider>
-      <AppInner />
     </ToastProvider>
   )
 }
