@@ -49,9 +49,15 @@ export const api = {
     request<any>(`/transactions/${id}/settle`, { method: 'POST', body: JSON.stringify({ tanggal_pelunasan: tanggal }) }),
   getActivity: (customerId: string, month: number, year: number) =>
     request<any>(`/transactions/customers/${customerId}/activity?month=${month}&year=${year}`),
-  settleMonth: (customerId: string, month: number, year: number) =>
-    request<any>(`/transactions/customers/${customerId}/settle-month`, { method: 'POST', body: JSON.stringify({ month, year }) }),
+  settleMonth: (customerId: string, month: number, year: number, tanggal_pelunasan: string) =>
+    request<any>(`/transactions/customers/${customerId}/settle-month`, { method: 'POST', body: JSON.stringify({ month, year, tanggal_pelunasan }) }),
   getBonusStatus: (customerId: string) => request<any>(`/transactions/customers/${customerId}/bonus-status`),
+  exportCustomerPdf: (customerId: string, month: number, year: number) =>
+    fetch(BASE + `/transactions/customers/${customerId}/export-pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+      body: JSON.stringify({ month, year }),
+    }).then(r => r.blob()),
 
   // Reports
   getRecap: (type: string, month: number, year: number) =>

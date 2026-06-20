@@ -1,12 +1,50 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { useToast } from '../context/ToastContext'
-import { Plus, CheckCircle, X, Sparkles, ChevronDown, ChevronUp, Receipt } from 'lucide-react'
+import { Plus, CheckCircle, X, Sparkles, ChevronDown, ChevronUp, Receipt, Download } from 'lucide-react'
 import RupiahInput from '../components/RupiahInput'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 const fmt = (n: number) => Number(n).toLocaleString('id-ID')
 const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']
+
+// ─── Date input modal ────────────────────────────────────────
+function SettleDateModal({ open, title, onConfirm, onCancel }: {
+  open: boolean; title: string
+  onConfirm: (date: string) => void; onCancel: () => void
+}) {
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+      <div className="w-full max-w-sm rounded-2xl p-6" style={{
+        background: 'linear-gradient(145deg, #181818, #111)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 32px 64px rgba(0,0,0,0.6)',
+      }}>
+        <h3 className="text-sm font-semibold text-white mb-4">{title}</h3>
+        <div className="mb-5">
+          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Tanggal Pelunasan</label>
+          <input type="date" value={date} onChange={e => setDate(e.target.value)}
+            className="w-full rounded-xl px-4 py-3 text-sm text-white focus:outline-none"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} />
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onCancel}
+            className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-400 transition-colors"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            Batal
+          </button>
+          <button onClick={() => onConfirm(date)}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-black transition-all"
+            style={{ background: '#f59e0b', boxShadow: '0 4px 12px rgba(245,158,11,0.25)' }}>
+            Konfirmasi Lunas
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function Transactions() {
   const [customers, setCustomers] = useState<any[]>([])
@@ -18,7 +56,8 @@ export default function Transactions() {
   const [year, setYear] = useState(new Date().getFullYear())
   const [expandedTx, setExpandedTx] = useState<string | null>(null)
   const [settleTarget, setSettleTarget] = useState<any>(null)
-  const [settleMonthConfirm, setSettleMonthConfirm] = useState(false)
+  const [settleMonthOpen, setSettleMonthOpen] = useState(false)
+  const [exportingPdf, setExportingPdf] = useState(false)
   const { success, error } = useToast()
 
   const [form, setForm] = useState({
@@ -52,21 +91,24 @@ export default function Transactions() {
     } catch (err: any) { error(err.message) }
   }
 
-  const handleSettle = async () => {
+  const handleSettle = async (tanggal: string) => {
     if (!settleTarget) return
-    try { await api.settleTransaction(settleTarget.id, new Date().toISOString().split('T')[0]); success('Transaksi berhasil dilunasi'); loadActivity() }
-    catch (err: any) { error(err.message) }
+    try {
+      await api.settleTransaction(settleTarget.id, tanggal)
+      success('Transaksi berhasil dilunasi')
+      loadActivity()
+    } catch (err: any) { error(err.message) }
     setSettleTarget(null)
   }
 
-  const handleSettleMonth = async () => {
+  const handleSettleMonth = async (tanggal: string) => {
     if (!selectedCustomer) return
     try {
-      const result = await api.settleMonth(selectedCustomer, month, year)
+      const result = await api.settleMonth(selectedCustomer, month, year, tanggal)
       success(`${result.settled_count} transaksi berhasil dilunasi`)
       loadActivity()
     } catch (err: any) { error(err.message) }
-    setSettleMonthConfirm(false)
+    setSettleMonthOpen(false)
   }
 
   const handleDraftReminder = async (txId: string) => {
@@ -77,14 +119,45 @@ export default function Transactions() {
     } catch (err: any) { error(err.message) }
   }
 
-  const selectedCustomerName = customers.find(c => c.id === selectedCustomer)?.name
+  const handleExportPdf = async () => {
+    if (!selectedCustomer) return
+    setExportingPdf(true)
+    try {
+      const blob = await api.exportCustomerPdf(selectedCustomer, month, year)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const custName = customers.find(c => c.id === selectedCustomer)?.name || 'pelanggan'
+      a.href = url; a.download = `transaksi-${custName}-${MONTHS[month-1]}-${year}.pdf`; a.click()
+      URL.revokeObjectURL(url)
+      success('PDF berhasil diunduh')
+    } catch (err: any) { error(err.message) }
+    setExportingPdf(false)
+  }
 
+  // Preview total tagihan saat buat transaksi
+  const getItemPreviewPrice = (productId: string, customerId: string) => {
+    if (!productId || !customerId) return null
+    const product = products.find(p => p.id === productId)
+    const customer = customers.find(c => c.id === customerId)
+    if (!product || !customer) return null
+    const discounts = customer.discounts?.filter((d: any) => d.type === product.type)
+      .sort((a: any, b: any) => a.step_order - b.step_order) || []
+    if (discounts.length === 0) return Number(product.base_price)
+    let price = Number(product.base_price)
+    for (const d of discounts) price = price * (1 - Number(d.discount_percentage) / 100)
+    return Math.round(price * 100) / 100
+  }
+
+  const selectedCustomerName = customers.find(c => c.id === selectedCustomer)?.name
   const inputStyle = { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }
+
+  const previewTotal = form.items.reduce((sum, item) => {
+    const price = getItemPreviewPrice(item.product_id, form.customer_id)
+    return sum + (price ? price * item.quantity : 0)
+  }, 0) + form.ongkir
 
   return (
     <div className="space-y-5">
-
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-white" style={{ letterSpacing: '-0.02em' }}>Transaksi</h1>
@@ -98,10 +171,7 @@ export default function Transactions() {
       </div>
 
       {/* Filter bar */}
-      <div className="rounded-2xl p-4" style={{
-        background: 'linear-gradient(145deg, #141414, #111)',
-        border: '1px solid rgba(255,255,255,0.06)',
-      }}>
+      <div className="rounded-2xl p-4" style={{ background: 'linear-gradient(145deg, #141414, #111)', border: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-[180px]">
             <label className="block text-xs text-gray-600 mb-1.5">Pelanggan</label>
@@ -124,10 +194,18 @@ export default function Transactions() {
               className="rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none w-24" style={inputStyle} />
           </div>
           {selectedCustomer && activity?.transactions?.some((t: any) => t.status === 'Piutang') && (
-            <button onClick={() => setSettleMonthConfirm(true)}
-              className="text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
+            <button onClick={() => setSettleMonthOpen(true)}
+              className="text-sm font-semibold px-4 py-2.5 rounded-xl"
               style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}>
               Lunasi Semua Bulan Ini
+            </button>
+          )}
+          {selectedCustomer && activity && (
+            <button onClick={handleExportPdf} disabled={exportingPdf}
+              className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-50"
+              style={{ background: 'rgba(96,165,250,0.1)', color: '#60a5fa', border: '1px solid rgba(96,165,250,0.2)' }}>
+              <Download className="w-4 h-4" />
+              {exportingPdf ? 'Mengunduh...' : 'Unduh PDF'}
             </button>
           )}
         </div>
@@ -144,23 +222,14 @@ export default function Transactions() {
               { label: 'Omzet BR', value: activity.total_omzet_br, color: '#a78bfa' },
               { label: 'Laba HL', value: activity.total_laba_hl, color: '#f59e0b' },
             ].map(s => (
-              <div key={s.label} className="rounded-2xl p-4" style={{
-                background: 'linear-gradient(145deg, #141414, #111)',
-                border: '1px solid rgba(255,255,255,0.06)',
-              }}>
+              <div key={s.label} className="rounded-2xl p-4" style={{ background: 'linear-gradient(145deg, #141414, #111)', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <p className="text-xs text-gray-600 mb-1">{s.label}</p>
-                <p className="text-base font-semibold" style={{ color: s.color, letterSpacing: '-0.02em' }}>
-                  Rp {fmt(s.value)}
-                </p>
+                <p className="text-base font-semibold" style={{ color: s.color, letterSpacing: '-0.02em' }}>Rp {fmt(s.value)}</p>
               </div>
             ))}
           </div>
 
-          {/* Transactions table */}
-          <div className="rounded-2xl overflow-hidden" style={{
-            background: 'linear-gradient(145deg, #141414, #111)',
-            border: '1px solid rgba(255,255,255,0.06)',
-          }}>
+          <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(145deg, #141414, #111)', border: '1px solid rgba(255,255,255,0.06)' }}>
             {activity.transactions?.length === 0 ? (
               <div className="px-5 py-16 text-center">
                 <Receipt className="w-8 h-8 text-gray-700 mx-auto mb-2" />
@@ -170,7 +239,7 @@ export default function Transactions() {
               <table className="w-full">
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider w-8"></th>
+                    <th className="w-8 px-5 py-3.5"></th>
                     <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">No. Bon</th>
                     <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">Tanggal</th>
                     <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Tagihan</th>
@@ -181,13 +250,10 @@ export default function Transactions() {
                 <tbody>
                   {activity.transactions?.map((tx: any, idx: number) => (
                     <>
-                      <tr key={tx.id}
-                        style={{ borderBottom: expandedTx === tx.id ? 'none' : idx < activity.transactions.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                      <tr key={tx.id} style={{ borderBottom: expandedTx === tx.id ? 'none' : idx < activity.transactions.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
                         className="hover:bg-white/[0.02] transition-colors">
-                        {/* Expand toggle */}
                         <td className="pl-5 py-4">
-                          <button onClick={() => setExpandedTx(expandedTx === tx.id ? null : tx.id)}
-                            className="text-gray-600 hover:text-gray-400 transition-colors">
+                          <button onClick={() => setExpandedTx(expandedTx === tx.id ? null : tx.id)} className="text-gray-600 hover:text-gray-400">
                             {expandedTx === tx.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                           </button>
                         </td>
@@ -197,25 +263,16 @@ export default function Transactions() {
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-semibold px-2.5 py-1 rounded-lg"
-                              style={{
-                                background: tx.status === 'Lunas' ? 'rgba(74,222,128,0.1)' : 'rgba(251,191,36,0.1)',
-                                color: tx.status === 'Lunas' ? '#4ade80' : '#fbbf24',
-                                border: `1px solid ${tx.status === 'Lunas' ? 'rgba(74,222,128,0.2)' : 'rgba(251,191,36,0.2)'}`,
-                              }}>
+                              style={{ background: tx.status === 'Lunas' ? 'rgba(74,222,128,0.1)' : 'rgba(251,191,36,0.1)', color: tx.status === 'Lunas' ? '#4ade80' : '#fbbf24', border: `1px solid ${tx.status === 'Lunas' ? 'rgba(74,222,128,0.2)' : 'rgba(251,191,36,0.2)'}` }}>
                               {tx.status}
                             </span>
-                            {tx.is_bonus && (
-                              <span className="text-xs font-semibold px-2 py-1 rounded-lg"
-                                style={{ background: 'rgba(167,139,250,0.1)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.2)' }}>
-                                Bonus
-                              </span>
-                            )}
+                            {tx.is_bonus && <span className="text-xs font-semibold px-2 py-1 rounded-lg" style={{ background: 'rgba(167,139,250,0.1)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.2)' }}>Bonus</span>}
                           </div>
                         </td>
                         <td className="px-5 py-4 text-right">
-                          {tx.status === 'Piutang' && (
+                          {tx.status === 'Piutang' ? (
                             <div className="flex items-center justify-end gap-2">
-                              <button onClick={() => handleDraftReminder(tx.id)} title="Draft Reminder WA"
+                              <button onClick={() => handleDraftReminder(tx.id)} title="Draft WA"
                                 className="p-2 rounded-lg text-gray-600 hover:text-amber-400 hover:bg-amber-400/10 transition-all">
                                 <Sparkles className="w-3.5 h-3.5" />
                               </button>
@@ -224,13 +281,11 @@ export default function Transactions() {
                                 <CheckCircle className="w-3.5 h-3.5" />
                               </button>
                             </div>
-                          )}
-                          {tx.status === 'Lunas' && tx.tanggal_pelunasan && (
-                            <p className="text-xs text-gray-600">Lunas: {tx.tanggal_pelunasan}</p>
+                          ) : (
+                            tx.tanggal_pelunasan && <p className="text-xs text-gray-600">Lunas: {tx.tanggal_pelunasan}</p>
                           )}
                         </td>
                       </tr>
-                      {/* Expanded items */}
                       {expandedTx === tx.id && (
                         <tr key={`${tx.id}-detail`} style={{ borderBottom: idx < activity.transactions.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                           <td colSpan={6} className="px-5 pb-3">
@@ -239,15 +294,21 @@ export default function Transactions() {
                                 <thead>
                                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                     <th className="text-left px-4 py-2 text-gray-600">Produk</th>
+                                    <th className="text-left px-4 py-2 text-gray-600">Tipe</th>
                                     <th className="text-right px-4 py-2 text-gray-600">Qty</th>
-                                    <th className="text-right px-4 py-2 text-gray-600">Harga Satuan</th>
+                                    <th className="text-right px-4 py-2 text-gray-600">Harga Diskon</th>
                                     <th className="text-right px-4 py-2 text-gray-600">Subtotal</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {tx.items?.map((item: any) => (
                                     <tr key={item.id}>
-                                      <td className="px-4 py-2 text-gray-400">{item.product_id.slice(0, 8)}...</td>
+                                      <td className="px-4 py-2 text-gray-300 font-medium">{item.products?.name || item.product_id.slice(0, 8)}</td>
+                                      <td className="px-4 py-2">
+                                        <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: item.products?.type === 'LM' ? 'rgba(96,165,250,0.1)' : 'rgba(52,211,153,0.1)', color: item.products?.type === 'LM' ? '#60a5fa' : '#34d399' }}>
+                                          {item.products?.type || '—'}
+                                        </span>
+                                      </td>
                                       <td className="px-4 py-2 text-gray-400 text-right">{item.quantity}</td>
                                       <td className="px-4 py-2 text-gray-400 text-right">Rp {fmt(item.unit_discounted_price)}</td>
                                       <td className="px-4 py-2 text-white font-medium text-right">Rp {fmt(item.line_omzet)}</td>
@@ -255,13 +316,13 @@ export default function Transactions() {
                                   ))}
                                   {tx.ongkir > 0 && (
                                     <tr style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                                      <td className="px-4 py-2 text-gray-500" colSpan={3}>Ongkir</td>
+                                      <td className="px-4 py-2 text-gray-500" colSpan={4}>Ongkir</td>
                                       <td className="px-4 py-2 text-gray-400 text-right">Rp {fmt(tx.ongkir)}</td>
                                     </tr>
                                   )}
                                   <tr style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <td className="px-4 py-2 font-semibold text-white" colSpan={3}>Total Tagihan</td>
-                                    <td className="px-4 py-2 font-semibold text-white text-right">Rp {fmt(tx.amount_owed)}</td>
+                                    <td className="px-4 py-2.5 font-semibold text-white" colSpan={4}>Total Tagihan</td>
+                                    <td className="px-4 py-2.5 font-semibold text-amber-400 text-right">Rp {fmt(tx.amount_owed)}</td>
                                   </tr>
                                 </tbody>
                               </table>
@@ -278,7 +339,6 @@ export default function Transactions() {
         </>
       )}
 
-      {/* Empty state */}
       {!activity && (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(245,158,11,0.1)' }}>
@@ -291,16 +351,10 @@ export default function Transactions() {
       {/* Create modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-6" style={{
-            background: 'linear-gradient(145deg, #161616, #111)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            boxShadow: '0 32px 64px rgba(0,0,0,0.6)',
-          }}>
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-6" style={{ background: 'linear-gradient(145deg, #161616, #111)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 32px 64px rgba(0,0,0,0.6)' }}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-base font-semibold text-white">Buat Transaksi Baru</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-600 hover:text-white p-1 rounded-lg hover:bg-white/5">
-                <X className="w-4 h-4" />
-              </button>
+              <button onClick={() => setShowModal(false)} className="text-gray-600 hover:text-white p-1 rounded-lg hover:bg-white/5"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
@@ -329,26 +383,34 @@ export default function Transactions() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Item Produk</label>
-                  <button onClick={addItem} className="text-xs font-medium text-amber-400 hover:text-amber-300">+ Tambah Item</button>
+                  <button onClick={addItem} className="text-xs font-medium text-amber-400">+ Tambah Item</button>
                 </div>
                 <div className="space-y-2">
-                  {form.items.map((item, i) => (
-                    <div key={i} className="flex gap-2">
-                      <select value={item.product_id} onChange={e => { const items = [...form.items]; items[i].product_id = e.target.value; setForm({ ...form, items }) }}
-                        className="flex-1 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none" style={inputStyle}>
-                        <option value="">Pilih produk...</option>
-                        {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.type})</option>)}
-                      </select>
-                      <input type="number" placeholder="Qty" min={1} value={item.quantity}
-                        onChange={e => { const items = [...form.items]; items[i].quantity = Number(e.target.value); setForm({ ...form, items }) }}
-                        className="w-20 rounded-xl px-3 py-2.5 text-sm text-white text-center focus:outline-none" style={inputStyle} />
-                      {form.items.length > 1 && (
-                        <button onClick={() => removeItem(i)} className="text-gray-600 hover:text-red-400 p-2 rounded-xl hover:bg-red-400/10 transition-all">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                  {form.items.map((item, i) => {
+                    const previewPrice = getItemPreviewPrice(item.product_id, form.customer_id)
+                    return (
+                      <div key={i} className="space-y-1">
+                        <div className="flex gap-2">
+                          <select value={item.product_id} onChange={e => { const items = [...form.items]; items[i].product_id = e.target.value; setForm({ ...form, items }) }}
+                            className="flex-1 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none" style={inputStyle}>
+                            <option value="">Pilih produk...</option>
+                            {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.type})</option>)}
+                          </select>
+                          <input type="number" min={1} value={item.quantity}
+                            onChange={e => { const items = [...form.items]; items[i].quantity = Number(e.target.value); setForm({ ...form, items }) }}
+                            className="w-20 rounded-xl px-3 py-2.5 text-sm text-white text-center focus:outline-none" style={inputStyle} />
+                          {form.items.length > 1 && (
+                            <button onClick={() => removeItem(i)} className="text-gray-600 hover:text-red-400 p-2 rounded-xl hover:bg-red-400/10"><X className="w-3.5 h-3.5" /></button>
+                          )}
+                        </div>
+                        {previewPrice !== null && item.product_id && (
+                          <p className="text-xs text-amber-400/70 pl-2">
+                            Harga setelah diskon: Rp {fmt(previewPrice)} × {item.quantity} = <span className="font-semibold text-amber-400">Rp {fmt(previewPrice * item.quantity)}</span>
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -357,11 +419,17 @@ export default function Transactions() {
                   <RupiahInput value={form.ongkir} onChange={v => setForm({ ...form, ongkir: v })} placeholder="0" />
                 </div>
                 <div className="flex items-center gap-3 pt-6">
-                  <input type="checkbox" id="is_bonus" checked={form.is_bonus}
-                    onChange={e => setForm({ ...form, is_bonus: e.target.checked })} className="w-4 h-4 accent-amber-400" />
+                  <input type="checkbox" id="is_bonus" checked={form.is_bonus} onChange={e => setForm({ ...form, is_bonus: e.target.checked })} className="w-4 h-4 accent-amber-400" />
                   <label htmlFor="is_bonus" className="text-sm text-gray-400">Transaksi Bonus (Gratis)</label>
                 </div>
               </div>
+              {!form.is_bonus && previewTotal > 0 && (
+                <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}>
+                  <p className="text-xs text-gray-500 mb-0.5">Estimasi Total Tagihan</p>
+                  <p className="text-lg font-semibold text-amber-400">Rp {fmt(previewTotal)}</p>
+                  <p className="text-xs text-gray-600 mt-0.5">Harga final dihitung ulang server saat disimpan</p>
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Deskripsi (opsional)</label>
                 <textarea value={form.deskripsi} onChange={e => setForm({ ...form, deskripsi: e.target.value })} rows={2}
@@ -377,24 +445,17 @@ export default function Transactions() {
         </div>
       )}
 
-      <ConfirmDialog
+      <SettleDateModal
         open={!!settleTarget}
-        title="Konfirmasi Pelunasan"
-        message={`Tandai bon "${settleTarget?.nomor_bon}" senilai Rp ${fmt(settleTarget?.amount_owed || 0)} sebagai Lunas hari ini?`}
-        confirmLabel="Lunasi"
+        title={`Lunasi Bon ${settleTarget?.nomor_bon}`}
         onConfirm={handleSettle}
         onCancel={() => setSettleTarget(null)}
-        danger={false}
       />
-
-      <ConfirmDialog
-        open={settleMonthConfirm}
-        title="Lunasi Semua Bulan Ini"
-        message={`Tandai semua transaksi Piutang milik ${selectedCustomerName} di ${MONTHS[month - 1]} ${year} sebagai Lunas?`}
-        confirmLabel="Lunasi Semua"
+      <SettleDateModal
+        open={settleMonthOpen}
+        title={`Lunasi Semua Transaksi — ${MONTHS[month-1]} ${year}`}
         onConfirm={handleSettleMonth}
-        onCancel={() => setSettleMonthConfirm(false)}
-        danger={false}
+        onCancel={() => setSettleMonthOpen(false)}
       />
     </div>
   )

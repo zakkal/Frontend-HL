@@ -50,6 +50,7 @@ function RiskBadge({ risk }: { risk: 'low' | 'medium' | 'high' | null }) {
 export default function Customers() {
   const [customers, setCustomers] = useState<any[]>([])
   const [riskMap, setRiskMap] = useState<Record<string, 'low' | 'medium' | 'high'>>({})
+  const [bonusMap, setBonusMap] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState(true)
   const [loadingRisk, setLoadingRisk] = useState(false)
   const [search, setSearch] = useState('')
@@ -61,7 +62,18 @@ export default function Customers() {
 
   const load = async () => {
     setLoading(true)
-    try { setCustomers(await api.getCustomers()) } catch (e: any) { error(e.message) }
+    try {
+      const data = await api.getCustomers()
+      setCustomers(data)
+      // Load bonus status per customer
+      const bonuses: Record<string, any> = {}
+      await Promise.all(data.map(async (c: any) => {
+        try {
+          bonuses[c.id] = await api.getBonusStatus(c.id)
+        } catch (_) {}
+      }))
+      setBonusMap(bonuses)
+    } catch (e: any) { error(e.message) }
     setLoading(false)
   }
 
@@ -186,6 +198,7 @@ export default function Customers() {
                     {loadingRisk && <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />}
                   </span>
                 </th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">Bonus</th>
                 <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">Aksi</th>
               </tr>
             </thead>
@@ -240,6 +253,32 @@ export default function Customers() {
                     <RiskBadge risk={riskMap[c.id] ?? null} />
                   </td>
 
+                  {/* Bonus status */}
+                  <td className="px-5 py-4">
+                    {(() => {
+                      const b = bonusMap[c.id]
+                      if (!b) return <span className="text-xs text-gray-700">—</span>
+                      if (b.bonuses_remaining > 0) return (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg"
+                          style={{ background: 'rgba(167,139,250,0.1)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.2)' }}>
+                          🎁 {b.bonuses_remaining} bonus
+                        </span>
+                      )
+                      if (b.bonus_threshold > 0) {
+                        const pct = Math.min(100, Math.round((b.carry_over_omzet / b.bonus_threshold) * 100))
+                        return (
+                          <div className="min-w-[80px]">
+                            <p className="text-[10px] text-gray-600 mb-1">{pct}% ke bonus</p>
+                            <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                              <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: '#f59e0b' }} />
+                            </div>
+                          </div>
+                        )
+                      }
+                      return <span className="text-xs text-gray-700">—</span>
+                    })()}
+                  </td>
+
                   {/* Actions */}
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -257,7 +296,7 @@ export default function Customers() {
               ))}
               {customers.filter(c => c.name.toLowerCase().includes(search.toLowerCase())).length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-16 text-center text-gray-600 text-sm">
+                  <td colSpan={7} className="px-5 py-16 text-center text-gray-600 text-sm">
                     {search ? 'Tidak ada pelanggan yang sesuai pencarian' : 'Belum ada pelanggan terdaftar'}
                   </td>
                 </tr>
